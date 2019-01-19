@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TSQLLint.Common;
 using TSQLLint.Core.Interfaces;
+using TSQLLint.Infrastructure.Interfaces;
 using TSQLLint.Infrastructure.Plugins;
 using TSQLLint.Infrastructure.Rules.RuleExceptions;
 
@@ -23,12 +24,15 @@ namespace TSQLLint.Infrastructure.Parser
 
         private readonly IRuleExceptionFinder ruleExceptionFinder;
 
-        public SqlFileProcessor(IRuleVisitor ruleVisitor, IPluginHandler pluginHandler, IReporter reporter, IFileSystem fileSystem)
+        private readonly IFilePathFilter filePathFilter;
+
+        public SqlFileProcessor(IRuleVisitor ruleVisitor, IPluginHandler pluginHandler, IReporter reporter, IFileSystem fileSystem, IFilePathFilter filePathFilter)
         {
             this.ruleVisitor = ruleVisitor;
             this.pluginHandler = pluginHandler;
             this.reporter = reporter;
             this.fileSystem = fileSystem;
+            this.filePathFilter = filePathFilter;
             ruleExceptionFinder = new RuleExceptionFinder();
         }
 
@@ -69,8 +73,16 @@ namespace TSQLLint.Infrastructure.Parser
                 }
                 else
                 {
-                    ProcessFile(filePath);
+                    ProcessIfNotExcluded(filePath);
                 }
+            }
+        }
+
+        private void ProcessIfNotExcluded(string filePath)
+        {
+            if (filePathFilter == null || filePathFilter.IsFilePathAllowed(filePath))
+            {
+                ProcessFile(filePath);
             }
         }
 
@@ -140,7 +152,7 @@ namespace TSQLLint.Infrastructure.Parser
         {
             if (fileSystem.Path.GetExtension(fileName).Equals(".sql", StringComparison.InvariantCultureIgnoreCase))
             {
-                ProcessFile(fileName);
+                ProcessIfNotExcluded(fileName);
             }
         }
 

@@ -18,5 +18,7 @@ namespace TSQLLint.Core.Interfaces
         void ListPlugins();
 
         void LoadConfig(string configFilePath);
+
+        List<string> GetExcludeFilePaths();
     }
 }

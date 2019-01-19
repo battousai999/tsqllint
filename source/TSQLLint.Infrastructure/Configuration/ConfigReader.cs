@@ -16,6 +16,8 @@ namespace TSQLLint.Infrastructure.Configuration
 
         private readonly Dictionary<string, string> pluginPaths = new Dictionary<string, string>();
 
+        private readonly List<string> excludeFilePaths = new List<string>();
+
         private readonly IReporter reporter;
 
         private readonly IFileSystem fileSystem;
@@ -63,6 +65,11 @@ namespace TSQLLint.Infrastructure.Configuration
         public Dictionary<string, string> GetPlugins()
         {
             return pluginPaths;
+        }
+
+        public List<string> GetExcludeFilePaths()
+        {
+            return excludeFilePaths;
         }
 
         public void LoadConfig(string configFilePath)
@@ -121,6 +128,7 @@ namespace TSQLLint.Infrastructure.Configuration
                 SetupRules(token);
                 SetupPlugins(token);
                 SetupParser(token);
+                SetupExcludeFilePaths(token);
                 IsConfigLoaded = true;
             }
             else
@@ -159,6 +167,27 @@ namespace TSQLLint.Infrastructure.Configuration
                     }
 
                     configuredRules.Add(prop.Name, severity);
+                }
+            }
+        }
+
+        private void SetupExcludeFilePaths(JToken jsonObject)
+        {
+            var paths = jsonObject.SelectTokens("..exclude").ToList();
+
+            foreach (var path in paths)
+            {
+                if (path is JValue)
+                {
+                    var splitPath = path.Value<string>()
+                        .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim());
+
+                    excludeFilePaths.AddRange(splitPath);
+                }
+                else if (path is JArray)
+                {
+                    excludeFilePaths.AddRange(path.Select(x => x.Value<string>()));
                 }
             }
         }

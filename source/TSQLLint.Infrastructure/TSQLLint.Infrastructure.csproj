@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="1.9.71" />
+    <PackageReference Include="DotNet.Glob" Version="2.1.1" />
     <PackageReference Include="Microsoft.SqlServer.TransactSql.ScriptDom" Version="14.0.3811.1" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="System.IO.Abstractions" Version="2.1.0.178" />

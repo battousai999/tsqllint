@@ -246,3 +246,39 @@ namespace TSQLLint.Tests.UnitTests.PluginHandler
     }
 }
 ```
+
+## Excluding Paths
+
+Paths that should be excluded from being processed can be configured in the .tsqllintrc file:
+
+```json
+{
+    "rules": {
+        "upper-lower": "error"
+    },
+    "exclude": "**\generated\*"
+}
+```
+
+Multiple exclude paths can be specified as a comma-delimited list:
+```json
+{
+    "rules": {
+        "upper-lower": "error"
+    },
+    "exclude": "**\generated\*,**\temp\*"
+}
+```
+
+Or they can be specified in an array:
+```json
+{
+    "rules": {
+        "upper-lower": "error"
+    },
+    "exclude": [
+        "**\generated\*",
+        "**\temp\*"
+    ]
+}
+```

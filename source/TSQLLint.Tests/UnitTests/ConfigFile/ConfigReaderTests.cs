@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;
+using System.Linq;
 using NSubstitute;
 using NUnit.Framework;
 using TSQLLint.Common;
@@ -517,6 +518,95 @@ namespace TSQLLint.Tests.UnitTests.ConfigFile
             reporter.Received().Report("Found the following plugins:");
             reporter.Received().Report("Plugin Name 'my-first-plugin' loaded from path 'c:/users/someone/my-plugins/my-first-plugin.dll'");
             reporter.Received().Report("Plugin Name 'my-second-plugin' loaded from path 'c:/users/someone/my-plugins/my-second-plugin.dll'");
+        }
+
+        [Test]
+        public void ConfigReaderSetupExcludeFilePathsWithSinglePath()
+        {
+            // arrange
+            const string configFilePath = @"C:\Users\User\.tsqllintrc";
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    configFilePath, new MockFileData(@"
+                    {
+                        'exclude': 'c:/dbscripts-backup/'
+                    }")
+                }
+            });
+
+            var reporter = Substitute.For<IReporter>();
+            var environmentWrapper = Substitute.For<IEnvironmentWrapper>();
+
+            // act
+            var configReader = new ConfigReader(reporter, fileSystem, environmentWrapper);
+            configReader.LoadConfig(configFilePath);
+
+            // assert
+            Assert.AreEqual(1, configReader.GetExcludeFilePaths().Count);
+            Assert.IsTrue(configReader.GetExcludeFilePaths().Contains("c:/dbscripts-backup/"));
+            Assert.IsTrue(configReader.IsConfigLoaded);
+        }
+
+        [Test]
+        public void ConfigReaderSetupExcludeFilePathsWithMultiplePaths()
+        {
+            // arrange
+            const string configFilePath = @"C:\Users\User\.tsqllintrc";
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    configFilePath, new MockFileData(@"
+                    {
+                        'exclude': [
+                            'c:/dbscripts-backup/',
+                            'c:/dbscripts-temp/'
+                        ]
+                    }")
+                }
+            });
+
+            var reporter = Substitute.For<IReporter>();
+            var environmentWrapper = Substitute.For<IEnvironmentWrapper>();
+
+            // act
+            var configReader = new ConfigReader(reporter, fileSystem, environmentWrapper);
+            configReader.LoadConfig(configFilePath);
+
+            // assert
+            Assert.AreEqual(2, configReader.GetExcludeFilePaths().Count);
+            Assert.IsTrue(configReader.GetExcludeFilePaths().Contains("c:/dbscripts-backup/"));
+            Assert.IsTrue(configReader.GetExcludeFilePaths().Contains("c:/dbscripts-temp/"));
+            Assert.IsTrue(configReader.IsConfigLoaded);
+        }
+
+        [Test]
+        public void ConfigReaderSetupExcludeFilePathsWithCommaDelimitedPath()
+        {
+            // arrange
+            const string configFilePath = @"C:\Users\User\.tsqllintrc";
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    configFilePath, new MockFileData(@"
+                    {
+                        'exclude': 'c:/dbscripts-backup/,c:/dbscripts-temp/'
+                    }")
+                }
+            });
+
+            var reporter = Substitute.For<IReporter>();
+            var environmentWrapper = Substitute.For<IEnvironmentWrapper>();
+
+            // act
+            var configReader = new ConfigReader(reporter, fileSystem, environmentWrapper);
+            configReader.LoadConfig(configFilePath);
+
+            // assert
+            Assert.AreEqual(2, configReader.GetExcludeFilePaths().Count);
+            Assert.IsTrue(configReader.GetExcludeFilePaths().Contains("c:/dbscripts-backup/"));
+            Assert.IsTrue(configReader.GetExcludeFilePaths().Contains("c:/dbscripts-temp/"));
+            Assert.IsTrue(configReader.IsConfigLoaded);
         }
     }
 }

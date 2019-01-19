@@ -8,6 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using TSQLLint.Common;
 using TSQLLint.Core.Interfaces;
+using TSQLLint.Infrastructure.Interfaces;
 using TSQLLint.Infrastructure.Parser;
 
 namespace TSQLLint.Tests.UnitTests.Parser
@@ -36,11 +37,14 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var fileSystem = Substitute.For<IFileSystem>();
             var fileBase = Substitute.For<FileBase>();
             var pluginHandler = Substitute.For<IPluginHandler>();
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             fileBase.Exists(filePath).Returns(true);
             fileBase.OpenRead(filePath).Returns(ParsingUtility.GenerateStreamFromString("Some Sql To Parse"));
             fileSystem.File.Returns(fileBase);
+
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
 
             // act
             processor.ProcessPath("\" " + filePath + " \""); // Also testing removal of quotes and leading/trailing spaces
@@ -64,6 +68,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var pluginHandler = Substitute.For<IPluginHandler>();
             var reporter = Substitute.For<IReporter>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -81,7 +86,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath("\" " + @"c:\DBScripts" + " \"");
@@ -106,6 +113,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -123,7 +131,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"c:\DBScripts");
@@ -147,6 +157,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var fileSystem = Substitute.For<IFileSystem>();
             var fileBase = Substitute.For<FileBase>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             fileBase.Exists(filePath).Returns(false);
             fileSystem.File.Returns(fileBase);
@@ -154,7 +165,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             directoryBase.Exists(filePath).Returns(false);
             fileSystem.Directory.Returns(directoryBase);
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(filePath);
@@ -179,6 +190,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -196,7 +208,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"c:\DBScripts\file?.sql");
@@ -222,6 +236,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -242,7 +257,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"c:\DBScripts\file*.*");
@@ -265,6 +282,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(
                 new Dictionary<string, MockFileData>
@@ -275,7 +293,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 },
                 @"c:\dbscripts");
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"c:\doesntExist\file*.*");
@@ -299,6 +317,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(
                 new Dictionary<string, MockFileData>
@@ -321,7 +340,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 },
                 @"c:\dbscripts");
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"file*.*");
@@ -345,6 +366,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -353,7 +375,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessPath(@"c:\DBScripts\invalid*.*");
@@ -365,6 +387,77 @@ namespace TSQLLint.Tests.UnitTests.Parser
         }
 
         [Test]
+        public void ProcessPath_WithoutExclusions_ShouldProcessAllFiles()
+        {
+            // arrange
+            const string filePath1 = @"c:\dbscripts\file1.sql";
+            const string filePath2 = @"c:\dbscripts\file2.sql";
+
+            var ruleVisitor = Substitute.For<IRuleVisitor>();
+            var pluginHandler = Substitute.For<IPluginHandler>();
+            var reporter = Substitute.For<IReporter>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    filePath1, new MockFileData("File1SQL")
+                },
+                {
+                    filePath2, new MockFileData("File2SQL")
+                }
+            });
+
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
+
+            // act
+            processor.ProcessPath(@"c:\DBScripts\");
+
+            // assert
+            ruleVisitor.Received().VisitRules(filePath1, Arg.Any<IEnumerable<IExtendedRuleException>>(), Arg.Any<Stream>());
+            ruleVisitor.Received().VisitRules(filePath2, Arg.Any<IEnumerable<IExtendedRuleException>>(), Arg.Any<Stream>());
+            Assert.AreEqual(2, processor.FileCount);
+        }
+
+        [Test]
+        public void ProcessPath_WithExclusions_ShouldProcessNonExcludedFiles()
+        {
+            // arrange
+            const string filePath1 = @"c:\dbscripts\file1.sql";
+            const string filePath2 = @"c:\dbscripts\file2.sql";
+
+            var ruleVisitor = Substitute.For<IRuleVisitor>();
+            var pluginHandler = Substitute.For<IPluginHandler>();
+            var reporter = Substitute.For<IReporter>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    filePath1, new MockFileData("File1SQL")
+                },
+                {
+                    filePath2, new MockFileData("File2SQL")
+                }
+            });
+
+            filePathFilter.IsFilePathAllowed(filePath1).Returns(false);
+            filePathFilter.IsFilePathAllowed(filePath2).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
+
+            // act
+            processor.ProcessPath(@"c:\DBScripts\");
+
+            // assert
+            ruleVisitor.DidNotReceive().VisitRules(filePath1, Arg.Any<IEnumerable<IExtendedRuleException>>(), Arg.Any<Stream>());
+            ruleVisitor.Received().VisitRules(filePath2, Arg.Any<IEnumerable<IExtendedRuleException>>(), Arg.Any<Stream>());
+            Assert.AreEqual(1, processor.FileCount);
+        }
+
+        [Test]
         public void ProcessList_EmptyList_ShouldNotProcess()
         {
             // arrange
@@ -372,7 +465,8 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var reporter = Substitute.For<IReporter>();
             var fileSystem = Substitute.For<IFileSystem>();
             var pluginHandler = Substitute.For<IPluginHandler>();
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessList(new List<string>());
@@ -394,6 +488,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -411,7 +506,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessList(new List<string> { "\" c:\\dbscripts\\db2\\sproc , c:\\dbscripts\\db2\\file3.sql \"", @"c:\dbscripts\db1\" });             // tests quotes, extra spaces, commas, multiple items in the list
@@ -435,6 +532,7 @@ namespace TSQLLint.Tests.UnitTests.Parser
             var ruleVisitor = Substitute.For<IRuleVisitor>();
             var reporter = Substitute.For<IReporter>();
             var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
 
             var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
             {
@@ -446,7 +544,9 @@ namespace TSQLLint.Tests.UnitTests.Parser
                 }
             });
 
-            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem);
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
 
             // act
             processor.ProcessList(new List<string> { invalidFilePath, @"c:\dbscripts\db1\" });
@@ -457,6 +557,77 @@ namespace TSQLLint.Tests.UnitTests.Parser
             ruleVisitor.Received().VisitRules(filePath2, Arg.Any<IEnumerable<IRuleException>>(), Arg.Any<Stream>());
             reporter.Received().Report($@"{invalidFilePath} is not a valid file path.");
             Assert.AreEqual(2, processor.FileCount);
+        }
+
+        [Test]
+        public void ProcessList_WithoutExclusions_ShouldProcessAllPaths()
+        {
+            // arrange
+            const string filePath1 = @"c:\dbscripts\db1\file2.sql";
+            const string filePath2 = @"c:\dbscripts\db1\file3.sql";
+
+            var ruleVisitor = Substitute.For<IRuleVisitor>();
+            var reporter = Substitute.For<IReporter>();
+            var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    filePath1, new MockFileData("File1SQL")
+                },
+                {
+                    filePath2, new MockFileData("File2SQL")
+                }
+            });
+
+            filePathFilter.IsFilePathAllowed(Arg.Any<string>()).Returns(true);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
+
+            // act
+            processor.ProcessList(new List<string> { @"c:\dbscripts\db1\" });
+
+            // assert
+            ruleVisitor.Received().VisitRules(filePath1, Arg.Any<IEnumerable<IRuleException>>(), Arg.Any<Stream>());
+            ruleVisitor.Received().VisitRules(filePath2, Arg.Any<IEnumerable<IRuleException>>(), Arg.Any<Stream>());
+            Assert.AreEqual(2, processor.FileCount);
+        }
+
+        [Test]
+        public void ProcessList_WithExclusions_ShouldProcessNonExcludedPaths()
+        {
+            // arrange
+            const string filePath1 = @"c:\dbscripts\db1\file2.sql";
+            const string filePath2 = @"c:\dbscripts\db1\file3.sql";
+
+            var ruleVisitor = Substitute.For<IRuleVisitor>();
+            var reporter = Substitute.For<IReporter>();
+            var pluginHandler = Substitute.For<IPluginHandler>();
+            var filePathFilter = Substitute.For<IFilePathFilter>();
+
+            var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
+            {
+                {
+                    filePath1, new MockFileData("File1SQL")
+                },
+                {
+                    filePath2, new MockFileData("File2SQL")
+                }
+            });
+
+            filePathFilter.IsFilePathAllowed(filePath1).Returns(true);
+            filePathFilter.IsFilePathAllowed(filePath2).Returns(false);
+
+            var processor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, fileSystem, filePathFilter);
+
+            // act
+            processor.ProcessList(new List<string> { @"c:\dbscripts\db1\" });
+
+            // assert
+            ruleVisitor.Received().VisitRules(filePath1, Arg.Any<IEnumerable<IRuleException>>(), Arg.Any<Stream>());
+            ruleVisitor.DidNotReceive().VisitRules(filePath2, Arg.Any<IEnumerable<IRuleException>>(), Arg.Any<Stream>());
+            Assert.AreEqual(1, processor.FileCount);
         }
     }
 }

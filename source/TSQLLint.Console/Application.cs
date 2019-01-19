@@ -50,7 +50,8 @@ namespace TSQLLint.Console
             var ruleVisitorBuilder = new RuleVisitorBuilder(configReader, this.reporter);
             var ruleVisitor = new SqlRuleVisitor(ruleVisitorBuilder, fragmentBuilder, reporter);
             pluginHandler = new PluginHandler(reporter);
-            fileProcessor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, new FileSystem());
+            var excludeFilter = new ExcludeGlobPathFilter(configReader);
+            fileProcessor = new SqlFileProcessor(ruleVisitor, pluginHandler, reporter, new FileSystem(), excludeFilter);
 
             pluginHandler.ProcessPaths(configReader.GetPlugins());
             var response = commandLineOptionHandler.Handle(new CommandLineRequestMessage(commandLineOptions));
